@@ -1,0 +1,1 @@
+# lucernefestival.ch event crawler
