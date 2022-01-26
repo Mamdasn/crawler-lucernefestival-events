@@ -47,10 +47,10 @@ class EventCrawler:
                 event = queue.get()
                 self._data.append(Lucernefestival_grabber.parse_event_list(expanded_details, event, self.url))
                 queue.task_done()
-        
+
         queue = Queue()
 
-        concurrent_threads = 1 if expanded_details else 8
+        concurrent_threads = 1 if not expanded_details else 16
         concurrent_threads = self.concurrent_threads if self.concurrent_threads else concurrent_threads
         for itr in range(concurrent_threads):
             worker = threading.Thread(target=_parser, args=(expanded_details, queue, itr))
@@ -73,16 +73,21 @@ class EventCrawler:
         self._parse_event_list(**kwargs)
 
         if self._save_to_database:
+            print("Writing/Updating data in database")
             write_to_database = self._supported_method_functions[f"{self.url_base}"]["write_to_database"]
             write_to_database(self._data)
 
         return self._data
 
 
-ecrawler_summer = EventCrawler("https://www.lucernefestival.ch/en/program/summer-festival-22", save_to_database=False)
-data = ecrawler_summer.crawl(expanded_details=True)
-
+ecrawler_summer = EventCrawler("https://www.lucernefestival.ch/en/program/summer-festival-22", save_to_database=True)
+print("Scraping data from lucernefestival.ch")
+data = ecrawler_summer.crawl(expanded_details=False)
+print("Scraping data finished.")
 
 # ecrawler_spring = EventCrawler("https://www.lucernefestival.ch/en/program/mendelssohn-festival-22")
 # print(ecrawler_spring.crawl(expanded_details=True))
+
+
+
 
