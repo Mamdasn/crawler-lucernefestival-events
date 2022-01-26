@@ -1,5 +1,5 @@
 configparser==5.2.0
 requests==2.26.0
 bs4==0.0.1
-psycopg2
 urllib3==1.26.8
+psycopg2==2.9.3
