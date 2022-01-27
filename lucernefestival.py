@@ -6,7 +6,6 @@ import psycopg2
 from config import config
 
 class Lucernefestival_grabber():
-    
     def get_event_list(url):
         event_list = None
         with Session() as session:
@@ -16,7 +15,7 @@ class Lucernefestival_grabber():
             event_list = events_list_section.find_all('div', {'class': 'entry', 'id': True, 'data-date': True})
         return event_list
 
-    def parse_event_list(expanded_details, event, url):
+    def parse_event_list(event, expanded_details):
             # date
             date = event['data-date']
             # time
@@ -41,9 +40,8 @@ class Lucernefestival_grabber():
                 artists = event.find('div', {'class': 'event-info'}).a.get_text().strip().replace(" |", ";")
             else:
                 # extracting works and artists in more details
-                url_base =  urlparse(url).hostname
-                url_scheme =  urlparse(url).scheme
-                event_url = f"{url_scheme}://{url_base}/{event.find('div', {'class': 'event-info'}).a['href']}"
+
+                event_url = f"https://www.lucernefestival.ch/{event.find('div', {'class': 'event-info'}).a['href']}"
 
                 with Session() as inner_session:
                     event_page_data = inner_session.get(event_url)
@@ -72,7 +70,6 @@ class Lucernefestival_postgres():
 
     def write_to_database(data):
         """ create tables in the PostgreSQL database and insert data into it"""
-
         def _insert_event(
                     cursor,
                     date = None, 
@@ -89,8 +86,8 @@ class Lucernefestival_postgres():
                     """
                     
                     sql_event_detail = """INSERT INTO event_detail (artists, date, time, image_link, location, works)
-                            VALUES(%s, %s::DATE, %s::TIME, %s, %s, %s) ON CONFLICT (artists, date, time) DO UPDATE 
-                            SET works = EXCLUDED.works, image_link = EXCLUDED.image_link, location = EXCLUDED.location 
+                            VALUES(%s, %s::DATE, %s::TIME, %s, %s, %s) ON CONFLICT (location, date, time) DO UPDATE 
+                            SET works = EXCLUDED.works, image_link = EXCLUDED.image_link, artists = EXCLUDED.artists 
                             RETURNING id;"""
                     sql_event = """INSERT INTO event (title, date, time, event_detail_id)
                                         VALUES(%s, %s::DATE, %s::TIME, %s) ON CONFLICT (event_detail_id) DO NOTHING RETURNING id;"""
@@ -115,10 +112,10 @@ class Lucernefestival_postgres():
                 artists VARCHAR(400) NOT NULL,
                 date DATE NOT NULL,
                 time TIME NOT NULL,
+                location VARCHAR(400) NOT NULL,
                 image_link VARCHAR(400),
-                location VARCHAR(400),
                 works VARCHAR,
-                UNIQUE(artists, date, time)
+                UNIQUE(location, date, time)
             )
             """,
             """
