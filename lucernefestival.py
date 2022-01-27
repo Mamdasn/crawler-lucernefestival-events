@@ -1,11 +1,12 @@
 from requests import Session
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse
-
 import psycopg2
+
 from config import config
 
-class Lucernefestival_grabber():
+class LucernefestivalGrabber():
+
     def get_event_list(url):
         event_list = None
         with Session() as session:
@@ -19,7 +20,7 @@ class Lucernefestival_grabber():
             # date
             date = event['data-date']
             # time
-            time_of_day = event.find('span', {'class': 'time'}).string.strip().replace('.', ':')
+            time_of_day = event.find('span', {'class': 'time'}).string.strip().replace('.', ':').split("/")[0]
             # location
             location = event.find('p', {'class': 'location'}).get_text().strip()
             # title
@@ -66,7 +67,7 @@ class Lucernefestival_grabber():
             return {"date": date, "time": time_of_day, "location": location, "title": title, "artists": artists, "works": works, "image_link": image_link}
 
 
-class Lucernefestival_postgres():
+class LucernefestivalPostgres():
 
     def write_to_database(data):
         """ create tables in the PostgreSQL database and insert data into it"""
