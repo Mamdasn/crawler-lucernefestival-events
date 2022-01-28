@@ -76,16 +76,17 @@ method = {"www.lucernefestival.ch":
             "write_to_database": LucernefestivalPostgres.write_to_database,
             }
         }
-ecrawler_summer = EventCrawler(method)
+ecrawler = EventCrawler(method)
 
 print("Scraping data from lucernefestival.ch")
 url = "https://www.lucernefestival.ch/en/program/summer-festival-22"
-data = ecrawler_summer.crawl(url, number_of_threads=8, save_to_database=True, expanded_details=True)
+data = ecrawler.crawl(url, number_of_threads=8, save_to_database=True, expanded_details=True)
 print("Scraping data finished.")
 
 
-# ecrawler_spring = EventCrawler("https://www.lucernefestival.ch/en/program/mendelssohn-festival-22")
-# print(ecrawler_spring.crawl(expanded_details=True))
+# url = "https://www.lucernefestival.ch/en/program/mendelssohn-festival-22"
+# data = ecrawler.crawl(url, number_of_threads=8, save_to_database=True, expanded_details=True)
+
 
 
 
