@@ -8,18 +8,16 @@ from  lucernefestival import LucernefestivalGrabber, LucernefestivalPostgres
 
 
 class EventCrawler:
-    def __init__(self, url, method, save_to_database=False):
-        self.url = url
-        self.url_base =  urlparse(self.url).hostname
-        self.url_scheme =  urlparse(self.url).scheme
+    def __init__(self, method):
+        self.url = None
         self._supported_methods = method
-        self._save_to_database = save_to_database
-        self._event_list = None
-        self.concurrent_threads = None
-        self._data = []
+
+    @property
+    def _url_base(self):
+        return urlparse(self.url).hostname
 
     def _is_supported(self):
-        if self.url_base in self._supported_methods:
+        if self._url_base in self._supported_methods:
             return True 
         else:
             return False
@@ -45,28 +43,29 @@ class EventCrawler:
 
         queue.join()
         return data
-
-    def crawl(self, number_of_threads=1, **kwargs):
+    
+    def crawl(self, url, number_of_threads=1, save_to_database=True, **kwargs):
+        self.url = url
         if not self._is_supported():
-            raise ValueError(f"This url is not supported!\nPlease include the internet protocol,e.g. http https, in url.\nSupported urls: {self._supported_methods}")
+            raise ValueError(f"This url is not supported!\nPlease include the internet protocol,e.g. http https, in url.\nSupported urls: {[k for k in self._supported_methods]}")
         
-        get_event_list   = self._supported_methods[f"{self.url_base}"]["get_event_list"]
-        parse_event_list = self._supported_methods[f"{self.url_base}"]["parse_event_list"]
+        get_event_list   = self._supported_methods[f"{self._url_base}"]["get_event_list"]
+        parse_event_list = self._supported_methods[f"{self._url_base}"]["parse_event_list"]
 
-        self._event_list = get_event_list(self.url)
-        self.concurrent_threads = number_of_threads
-        self._data = self._run_in_parallel(parse_event_list, self._event_list, self.concurrent_threads, **kwargs)
+        event_list = get_event_list(self.url)
+        concurrent_threads = number_of_threads
+        data = self._run_in_parallel(parse_event_list, event_list, concurrent_threads, **kwargs)
 
-        if self._save_to_database:
+        if save_to_database:
             print("Writing/Updating data in database")
-            write_to_database = self._supported_methods[f"{self.url_base}"]["write_to_database"]
-            write_response = write_to_database(self._data)
+            write_to_database = self._supported_methods[f"{self._url_base}"]["write_to_database"]
+            write_response = write_to_database(data)
             if write_response:
                 print("Writing/Updating data in database is done.")
             else:
                 print("There seems to be a problem with your database.")
 
-        return self._data
+        return data
 
 
 # Define a method
@@ -77,12 +76,13 @@ method = {"www.lucernefestival.ch":
             "write_to_database": LucernefestivalPostgres.write_to_database,
             }
         }
-ecrawler_summer = EventCrawler("https://www.lucernefestival.ch/en/program/summer-festival-22", method, save_to_database=True)
+ecrawler_summer = EventCrawler(method)
 
 print("Scraping data from lucernefestival.ch")
-data = ecrawler_summer.crawl(number_of_threads=8, expanded_details=True)
-# print(data)
+url = "https://www.lucernefestival.ch/en/program/summer-festival-22"
+data = ecrawler_summer.crawl(url, number_of_threads=8, save_to_database=True, expanded_details=True)
 print("Scraping data finished.")
+
 
 # ecrawler_spring = EventCrawler("https://www.lucernefestival.ch/en/program/mendelssohn-festival-22")
 # print(ecrawler_spring.crawl(expanded_details=True))
