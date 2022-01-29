@@ -2,7 +2,7 @@ from requests import Session
 from bs4 import BeautifulSoup
 import psycopg2
 
-from config import config
+from postgres.config import config
 
 
 class LucernefestivalGrabber:
@@ -116,6 +116,7 @@ class LucernefestivalGrabber:
 class LucernefestivalPostgres:
     def write_to_database(data):
         """create tables in the PostgreSQL database and insert data into it"""
+
         def _insert_event(
             cursor,
             date=None,
